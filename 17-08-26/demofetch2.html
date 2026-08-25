@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fetch in JS</title>
+
+    <style>
+        table {
+            margin: auto;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: center;
+        }
+
+        button {
+            padding: 3px 8px;
+            margin: 2px;
+        }
+
+        img {
+            object-fit: contain;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1 align="center">List of Products</h1>
+
+    <table id="data">
+        <tr>
+            <th>Index</th>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Image</th>
+            <th>Price (INR)</th>
+            <th>Category</th>
+            <th>Stock</th>
+            <th>Quantity</th>
+        </tr>
+    </table>
+
+    <script>
+
+        const url = "https://dummyjson.com/products";
+
+        
+        async function getRate() {
+
+            try {
+
+                const URL = "https://open.er-api.com/v6/latest/USD";
+
+                const res = await fetch(URL);
+
+                if (!res.ok) {
+                    throw new Error("Currency API failed");
+                }
+
+                const data = await res.json();
+
+                const rate = Number(data.rates.INR);
+
+                console.log("INR Rate =", rate);
+
+                return rate;
+
+            } 
+            catch (err) {
+
+                console.log("Rate Error:", err);
+
+               
+                return 88;
+
+            }
+        }
+
+
+       
+        function increase(btn) {
+
+            let q = btn.previousElementSibling;
+
+            q.innerText = Number(q.innerText) + 1;
+        }
+
+
+        
+        function decrease(btn) {
+
+            let q = btn.nextElementSibling;
+
+            if (Number(q.innerText) > 0) {
+
+                q.innerText = Number(q.innerText) - 1;
+
+            }
+        }
+
+
+        
+        async function loadProduct() {
+
+            try {
+
+                const table = document.getElementById("data");
+
+                
+                const rate = await getRate();
+
+                
+                const res = await fetch(url);
+
+                if (!res.ok) {
+                    throw new Error("Product API failed");
+                }
+
+                const data = await res.json();
+
+                console.log(data);
+
+                data.products.forEach((i, index) => {
+
+                    table.innerHTML += `
+                        <tr>
+
+                            <td>${index + 1}</td>
+
+                            <td>${i.id}</td>
+
+                            <td>${i.title}</td>
+
+                            <td>
+                                <img src="${i.images[0]}"
+                                   width="50"
+                                    height="50">
+                            </td>
+
+                            <td>
+                                ₹${(i.price * rate).toFixed(2)}
+                            </td>
+
+                            <td>${i.category}</td>
+
+                            <td>${i.stock}</td>
+
+                            <td>
+                                <button onclick="decrease(this)">-</button>
+
+                                <span>0</span>
+
+                                <button onclick="increase(this)">+</button>
+                            </td>
+
+                        </tr>
+                    `;
+
+                });
+
+            }
+            catch (err) {
+
+                console.log("Error:", err);
+
+            }
+
+        }
+
+        
+        loadProduct();
+
+    </script>
+
+</body>
+</html>

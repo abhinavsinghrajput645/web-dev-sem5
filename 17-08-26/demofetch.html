@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Fetch</title>
+
+    <style>
+        h1 {
+            text-align: center;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            font-family: Arial, sans-serif;
+        }
+
+        table {
+            border-collapse: collapse;
+            border: 3px solid rgb(31, 193, 19);
+            margin: auto;
+            width: 80%;
+            background-color: white;
+        }
+
+        th, td {
+            border: 2px solid black;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #333;
+            color: white;
+        }
+
+        img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+        }
+
+        button {
+            padding: 5px 10px;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+
+        .add {
+            background-color: green;
+        }
+
+        .remove {
+            background-color: red;
+        }
+
+        .order {
+            background-color: blue;
+        }
+
+        .cart {
+            background-color: orange;
+        }
+
+        .buttons {
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>LIST OF PRODUCTS</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>SR.NO</th>
+                <th>Title</th>
+                <th>IMAGE</th>
+                <th>Description</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Rating</th>
+                <th>Add To Cart</th>
+                <th>Remove From Cart</th>
+                <th>NO. Of prod Added</th>
+            </tr>
+        </thead>
+
+        <tbody id="data"></tbody>
+    </table>
+
+    <div class="buttons">
+        <button class="order">Place Order</button>
+    </div>
+
+    <div class="buttons">
+        <button class="cart" onclick="gotocart()">Go To Cart</button>
+        <p id="cartCount"></p>
+    </div>
+
+
+    <script>
+        const url = "https://dummyjson.com/products?limit=10&skip=2";
+        const currencyUrl = "https://api.frankfurter.dev/v2/rate/USD/INR";
+
+        let products = [];
+
+        async function loadProduct() {
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                products = data.products;
+
+                const currencyRes = await fetch(currencyUrl);
+                const currencyData = await currencyRes.json();
+                const rate = currencyData.rate;
+
+                let rows = "";
+
+                products.map((i, index) => {
+                    rows += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${i.title}</td>
+                        <td><img src="${i.images[0]}" alt="${i.title}"></td>
+                        <td>${i.description}</td>
+                        <td>${i.category}</td>
+                        <td>₹${(i.price * rate).toFixed(2)}</td>
+                        <td>${i.rating}</td>
+                        <td><button class="add" onclick="addToCart(${index})">Add</button></td>
+                        <td><button class="remove" onclick="removeFromCart(${index})">Remove</button></td>
+                        <td id="quantity-${index}">0</td>
+                    </tr>`;
+                });
+
+                document.getElementById("data").innerHTML = rows;
+            }
+            catch (error) {
+                console.log(error);
+            }
+        }
+
+        function addToCart(index) {
+            const quantityElement = document.getElementById(`quantity-${index}`);
+            let quantity = parseInt(quantityElement.textContent);
+
+            quantity++;
+            quantityElement.textContent = quantity;
+
+            localStorage.setItem(
+                `product_${index}`,
+                JSON.stringify({
+                    product: products[index],
+                    quantity: quantity
+                })
+            );
+        }
+
+        function removeFromCart(index) {
+            const quantityElement = document.getElementById(`quantity-${index}`);
+            let quantity = parseInt(quantityElement.textContent);
+
+            if (quantity > 0) {
+                quantity--;
+                quantityElement.textContent = quantity;
+
+                if (quantity === 0)
+                    localStorage.removeItem(`product_${index}`);
+                else
+                    localStorage.setItem(
+                        `product_${index}`,
+                        JSON.stringify({
+                            product: products[index],
+                            quantity: quantity
+                        })
+                    );
+            }
+        }
+
+        function gotocart() {
+            let totalItems = 0;
+
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+
+                if (key.startsWith("product_")) {
+                    const item = JSON.parse(localStorage.getItem(key));
+                    totalItems += item.quantity;
+                }
+            }
+
+            document.getElementById("cartCount").innerHTML =
+                `Total items in cart: ${totalItems}`;
+        }
+
+        loadProduct();
+    </script>
+
+</body>
+</html>
